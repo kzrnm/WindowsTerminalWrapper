@@ -1,0 +1,27 @@
+name: test
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build app for release
+        run: |
+          msbuild WindowsTerminalWrapper.sln /p:configuration=release /p:platform=x86
+          msbuild WindowsTerminalWrapper.sln /p:configuration=release /p:platform=x64
+
+          mkdir dist
+          cp     Release/WindowsTerminalWrapper.exe "dist/WindowsTerminalWrapper(x86).exe"
+          cp x64/Release/WindowsTerminalWrapper.exe "dist/WindowsTerminalWrapper(x64).exe"
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: dist/*
+          tag: ${{ github.ref_name }}
